@@ -1,0 +1,56 @@
+services:
+  nginx:
+    container_name: nginx
+    image: nginx:alpine
+    ports:
+      - 80:80
+    volumes:
+      - ./docker/nginx/etc/conf.d:/etc/nginx/conf.d:ro
+      - ./www/public:/usr/share/nginx/html
+    networks:
+      - diploma
+  php:
+    container_name: php
+    build:
+      context: docker
+      dockerfile: php/Dockerfile
+      args:
+        - user=tsyden
+        - uid=1000
+    volumes:
+      - ./www:/usr/share/nginx/html
+    networks:
+      - diploma
+  mysql:
+    container_name: mysql
+    image: mysql:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=diploma_db
+      - MYSQL_USER=tsyden
+      - MYSQL_PASSWORD=diploma
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - diploma
+    restart: always
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin/phpmyadmin:latest
+    ports:
+      - 1500:80
+    environment:
+      - PMA_HOST=mysql
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - diploma
+    depends_on:
+      - mysql
+
+volumes:
+  mysql-data:
+
+networks:
+  diploma:
+    name: diploma
+    driver: bridge
